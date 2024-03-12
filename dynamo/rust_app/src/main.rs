@@ -1,19 +1,28 @@
 use aws_sdk_dynamodb::{model::AttributeValue, Client};
 use lambda_http::{service_fn, Body, Error, Request, RequestExt, Response};
 use std::env;
+use tracing::{info, instrument};
+use tracing_subscriber::fmt;
 
 /// Main function
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    // Initialize tracing subscriber
+    fmt()
+        .json()
+        .with_max_level(tracing::Level::INFO)
+        .with_current_span(false)
+        .with_ansi(false)
+        .without_time()
+        .with_target(false)
+        .init();
+
     // Initialize the AWS SDK for Rust
     let config = aws_config::load_from_env().await;
     let table_name = env::var("TABLE_NAME").expect("TABLE_NAME must be set");
     let dynamodb_client = Client::new(&config);
 
     // Register the Lambda handler
-    //
-    // We use a closure to pass the `dynamodb_client` and `table_name` as arguments
-    // to the handler function.
     lambda_http::run(service_fn(|request: Request| {
         put_item(&dynamodb_client, &table_name, request)
     }))
@@ -25,6 +34,7 @@ async fn main() -> Result<(), Error> {
 /// Put Item Lambda function
 ///
 /// This function will run for every invoke of the Lambda function.
+#[instrument(skip(client, table_name, request))]
 async fn put_item(
     client: &Client,
     table_name: &str,
@@ -34,7 +44,11 @@ async fn put_item(
     let path_parameters = request.path_parameters();
     let id = match path_parameters.first("id") {
         Some(id) => id,
-        None => return Ok(Response::builder().status(400).body("id is required".into())?),
+        None => {
+            // Logging error
+            tracing::error!("id is required");
+            return Ok(Response::builder().status(400).body("id is required".into())?);
+        }
     };
 
     // Extract body from request
@@ -55,8 +69,16 @@ async fn put_item(
 
     // Return a response to the end-user
     match res {
-        Ok(_) => Ok(Response::builder().status(200).body("item saved".into())?),
-        Err(_) => Ok(Response::builder().status(500).body("internal error".into())?),
+        Ok(_) => {
+            // Logging success
+            tracing::info!("item saved");
+            Ok(Response::builder().status(200).body("item saved".into())?)
+        }
+        Err(error) => {
+            // Logging error
+            tracing::error!("internal error: {:?}", error);
+            Ok(Response::builder().status(500).body("internal error".into())?)
+        }
     }
 }
 

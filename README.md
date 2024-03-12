@@ -1,4 +1,34 @@
-# Lambda microservice in AWS
+# Lambda microservice in AWS with logs and tracing
+
+This project was built on top of the AWS Serverless Application Model. First, I will describe how to build the model and then add the necessary dependencies to personlize the logs
+
+[x] Logging implementation
+[x] X-ray Tracing
+[x] CloudWatch Centralization
+[x] Documentation
+
+If we want to modify to insert more tracing and logging we Can do it adding the following dependencies to the Toml file:
+
+![Tracing](img/tracing_toml.png)
+
+Then we need to use them in the main.rs
+
+![use_trace](img/use_trace.png)
+
+And finally we add those into the async function:
+
+![tracing](img/tracing.png)
+
+None the less the SAM gramework builds by default a tracing mechanism:
+
+![tracing](img/tracing_default.png)
+
+And logs by default, the following is a screenshot after adding an item to the Dynamo table:
+
+![test_passed](img/test_passed.png)
+
+To know more about SAM, read the following instructions.
+
 
 # AWS Serverless Application with Rust Lambda and DynamoDB Integration
 
@@ -65,7 +95,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 4. **Test the Application:**
    Once the deployment is complete, you can test the application by invoking the Lambda function or sending payloads to trigger updates in the DynamoDB table.
 
-   ![test](img/test.png) ![test_passed](img/test_passed.png)
+   ![test](img/test.png) 
 
 ## Configuration
 
