@@ -19,7 +19,7 @@ And finally we add those into the async function:
 
 ![tracing](img/tracing.png)
 
-None the less the SAM gramework builds by default a tracing mechanism:
+Nonetheless the SAM framework builds by default a tracing mechanism:
 
 ![tracing](img/tracing_default.png)
 
